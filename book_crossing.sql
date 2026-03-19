@@ -91,4 +91,5 @@ INSERT INTO history (book_id, reader_id, from_location_id, to_location_id, previ
 (1, 2, NULL, 2, 1, 'вернул', '2025-06-10 13:15:00'),
 (3, 2, 2, NULL, 3, 'получил', '2015-12-15 16:45:00');
 
+ALTER TABLE readers ADD COLUMN favorite_genres VARCHAR(255) NULL AFTER email;
 ALTER TABLE books ADD COLUMN cover_image VARCHAR(255) NULL AFTER condition_book;

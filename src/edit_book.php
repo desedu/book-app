@@ -17,19 +17,35 @@ if (!$book) {
     exit;
 }
 
+$saved_title = $_COOKIE['book_title'] ?? '';
+$saved_author = $_COOKIE['book_author'] ?? '';
+$saved_genre = $_COOKIE['book_genre'] ?? '';
+$saved_condition = $_COOKIE['book_condition'] ?? '';
+
+$form_title = $_POST['title'] ?? ($saved_title ?: $book['title']);
+$form_author = $_POST['author'] ?? ($saved_author ?: $book['author']);
+$form_genre = $_POST['genre_id'] ?? ($saved_genre ?: $book['genre_id']);
+$form_condition = $_POST['condition_book'] ?? ($saved_condition ?: $book['condition_book']);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    setcookie('book_title', $_POST['title'], time() + 2592000, '/');
+    setcookie('book_author', $_POST['author'], time() + 2592000, '/');
+    setcookie('book_genre', $_POST['genre_id'], time() + 2592000, '/');
+    setcookie('book_condition', $_POST['condition_book'], time() + 2592000, '/');
+    
     $cover_image = $book['cover_image'];
     if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = '../uploads/';
-        $upload_dir_i = 'uploads/';
+        $upload_dir = '../uploads/covers/';
+        $upload_dir_i = 'uploads/covers/';
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
-        if ($cover_image && file_exists($cover_image)) {
-            unlink($cover_image);
+        if ($cover_image && file_exists('../' . $cover_image)) {
+            unlink('../' . $cover_image);
         }
         $extension = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
-        $filename = uniqid() . '.' . $extension;
+        $filename = 'book_' . uniqid() . '.' . $extension;
         $filepath = $upload_dir . $filename;
         if (move_uploaded_file($_FILES['cover_image']['tmp_name'], $filepath)) {
             $cover_image = $upload_dir_i . $filename;
@@ -40,6 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: ../index.php');
     exit;
 }
+
+$genres = $pdo->query("SELECT * FROM genres ORDER BY name")->fetchAll();
 ?>
 
 <!DOCTYPE HTML>
@@ -64,31 +82,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="col-md-8">
                                     <div class="mb-3">
                                         <label class="form-label small">Название</label>
-                                        <input type="text" name="title" class="form-control form-control-sm" value="<?= htmlspecialchars($book['title']) ?>" required>
+                                        <input type="text" name="title" class="form-control form-control-sm" value="<?= htmlspecialchars($form_title) ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small">Автор</label>
-                                        <input type="text" name="author" class="form-control form-control-sm" value="<?= htmlspecialchars($book['author']) ?>" required>
+                                        <input type="text" name="author" class="form-control form-control-sm" value="<?= htmlspecialchars($form_author) ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small">Жанр</label>
                                         <select name="genre_id" class="form-select form-select-sm" required>
-                                            <?php
-                                            $genres = $pdo->query("SELECT * FROM genres ORDER BY name")->fetchAll();
-                                            foreach ($genres as $genre) {
-                                                $selected = $genre['id'] == $book['genre_id'] ? 'selected' : '';
-                                                echo "<option value='{$genre['id']}' $selected>{$genre['name']}</option>";
-                                            }
-                                            ?>
+                                            <?php foreach ($genres as $genre): ?>
+                                                <option value="<?= $genre['id'] ?>" <?= $genre['id'] == $form_genre ? 'selected' : '' ?>>
+                                                    <?= $genre['name'] ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small">Состояние</label>
                                         <select name="condition_book" class="form-select form-select-sm">
-                                            <option value="отличное" <?= $book['condition_book'] == 'отличное' ? 'selected' : '' ?>>Отличное</option>
-                                            <option value="хорошее" <?= $book['condition_book'] == 'хорошее' ? 'selected' : '' ?>>Хорошее</option>
-                                            <option value="удовлетворительное" <?= $book['condition_book'] == 'удовлетворительное' ? 'selected' : '' ?>>Удовлетворительное</option>
-                                            <option value="плохое" <?= $book['condition_book'] == 'плохое' ? 'selected' : '' ?>>Плохое</option>
+                                            <option value="отличное" <?= $form_condition == 'отличное' ? 'selected' : '' ?>>Отличное</option>
+                                            <option value="хорошее" <?= $form_condition == 'хорошее' ? 'selected' : '' ?>>Хорошее</option>
+                                            <option value="удовлетворительное" <?= $form_condition == 'удовлетворительное' ? 'selected' : '' ?>>Удовлетворительное</option>
+                                            <option value="плохое" <?= $form_condition == 'плохое' ? 'selected' : '' ?>>Плохое</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
@@ -97,10 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <?php if ($book['cover_image'] && file_exists("../{$book['cover_image']}")): ?>
+                                    <?php if ($book['cover_image'] && file_exists('../' . $book['cover_image'])): ?>
                                         <div class="text-center p-3 bg-light rounded">
                                             <label class="form-label small">Текущая обложка</label>
-                                            <img src="<?= htmlspecialchars("../{$book['cover_image']}") ?>" class="img-fluid rounded" alt="">
+                                            <img src="../<?= htmlspecialchars($book['cover_image']) ?>" class="img-fluid rounded" alt="">
                                         </div>
                                     <?php endif; ?>
                                 </div>

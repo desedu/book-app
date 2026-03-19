@@ -8,6 +8,8 @@ if (!isset($_SESSION['id'])) {
 }
 
 include 'cookie.php';
+
+$genres = $pdo->query("SELECT * FROM genres ORDER BY name")->fetchAll();
 ?>
 <!DOCTYPE HTML>
 <html lang="RU">
@@ -64,13 +66,10 @@ include 'cookie.php';
                                 </div>
                                 <div class="col-md-2">
                                     <select name="genre_id" class="form-select form-select-sm" required>
-                                        <option value="">Жанр</option>
-                                        <?php
-                                        $genres = $pdo->query("SELECT * FROM genres ORDER BY name")->fetchAll();
-                                        foreach ($genres as $genre) {
-                                            echo "<option value='{$genre['id']}'>{$genre['name']}</option>";
-                                        }
-                                        ?>
+                                        <option value="">Выберите жанр</option>
+                                        <?php foreach ($genres as $genre): ?>
+                                            <option value="<?= $genre['id'] ?>"><?= $genre['name'] ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
@@ -117,7 +116,7 @@ include 'cookie.php';
                                     <td><?= $book['id'] ?></td>
                                     <td>
                                         <?php if ($book['cover_image'] && file_exists($book['cover_image'])): ?>
-                                            <img src="<?= htmlspecialchars($book['cover_image']) ?>" class="book-cover" style="max-height: 40px;" alt="">
+                                            <img src="<?= htmlspecialchars($book['cover_image']) ?>" style="max-height: 40px;" alt="">
                                         <?php else: ?>
                                             <span>📖</span>
                                         <?php endif; ?>
@@ -148,29 +147,8 @@ include 'cookie.php';
                         <div class="row align-items-center">
                             <div class="col"><h6 class="mb-0">Читатели</h6></div>
                             <div class="col-auto">
-                                <button class="btn btn-sm btn-success" data-bs-toggle="collapse" data-bs-target="#addReaderForm">+ Добавить читателя</button>
+                                <a href="./src/register_form.php" class="btn btn-sm btn-success">+ Регистрация читателя</a>
                             </div>
-                        </div>
-                    </div>
-                    <div class="collapse" id="addReaderForm">
-                        <div class="card-body bg-light">
-                            <form method="post" action="./src/readers_actions.php" class="row g-3">
-                                <div class="col-md-3">
-                                    <input type="text" name="username" class="form-control form-control-sm" placeholder="Логин" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="text" name="full_name" class="form-control form-control-sm" placeholder="ФИО" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="email" name="email" class="form-control form-control-sm" placeholder="Email" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="password" name="password" class="form-control form-control-sm" placeholder="Пароль" required>
-                                </div>
-                                <div class="col-md-1">
-                                    <button type="submit" name="add_reader" class="btn btn-sm btn-success">OK</button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -181,19 +159,39 @@ include 'cookie.php';
                                     <th>Логин</th>
                                     <th>ФИО</th>
                                     <th>Email</th>
+                                    <th>Любимые жанры</th>
+                                    <th>Дата регистрации</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
-                                $readers = $pdo->query("SELECT * FROM readers ORDER BY id")->fetchAll();
+                                $readers = $pdo->query("SELECT * FROM readers ORDER BY registration_date DESC")->fetchAll();
                                 foreach ($readers as $reader):
+                                    $favorite_genres = [];
+                                    if (!empty($reader['favorite_genres'])) {
+                                        $genre_ids = explode(',', $reader['favorite_genres']);
+                                        $placeholders = implode(',', array_fill(0, count($genre_ids), '?'));
+                                        $stmt = $pdo->prepare("SELECT name FROM genres WHERE id IN ($placeholders)");
+                                        $stmt->execute($genre_ids);
+                                        $favorite_genres = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                                    }
                                 ?>
                                 <tr>
                                     <td><?= $reader['id'] ?></td>
                                     <td><?= htmlspecialchars($reader['username']) ?></td>
                                     <td><?= htmlspecialchars($reader['full_name']) ?></td>
                                     <td><?= htmlspecialchars($reader['email']) ?></td>
+                                    <td>
+                                        <?php if (!empty($favorite_genres)): ?>
+                                            <?php foreach ($favorite_genres as $genre): ?>
+                                                <span class="badge bg-info me-1"><?= htmlspecialchars($genre) ?></span>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= $reader['registration_date'] ?></td>
                                     <td>
                                         <a href="./src/readers_actions.php?delete_reader=<?= $reader['id'] ?>" class="btn btn-sm btn-danger py-0" onclick="return confirm('Удалить?')">🗑️</a>
                                     </td>
@@ -353,7 +351,6 @@ include 'cookie.php';
         </div>
     </div>
 
-    <?php // include 'footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

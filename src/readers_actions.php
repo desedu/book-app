@@ -9,8 +9,9 @@ if (!isset($_SESSION['id'])) {
 
 if (isset($_POST['add_reader'])) {
     $password = md5($_POST['password']);
-    $stmt = $pdo->prepare("INSERT INTO readers (username, full_name, email, password) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$_POST['username'], $_POST['full_name'], $_POST['email'], $password]);
+    $favorite_genres = isset($_POST['favorite_genres']) ? implode(',', $_POST['favorite_genres']) : '';
+    $stmt = $pdo->prepare("INSERT INTO readers (username, full_name, email, favorite_genres, password) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$_POST['username'], $_POST['full_name'], $_POST['email'], $favorite_genres, $password]);
 }
 
 if (isset($_GET['delete_reader'])) {
