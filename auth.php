@@ -1,33 +1,39 @@
 <?php
-session_start(["use_strict_mode" => true]);
-require_once 'dbconnect.php';
+session_start();
 
-if (isset($_GET['logout'])) {
-    session_unset();
+if (isset($_GET["logout"])) {
+    $_SESSION = array();
     session_destroy();
-    header('Location: ../login.php');
-    exit;
+    header('Location: login.php');
+    exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    $login = $_POST['login'];
-    $password = md5($_POST['password']);
+if (isset($_POST["login"]) && $_POST["login"] != '') {
+    require "dbconnect.php";
     
-    $stmt = $pdo->prepare("SELECT * FROM readers WHERE email = ? AND password = ?");
-    $stmt->execute([$login, $password]);
-    $user = $stmt->fetch();
+    try {
+        $sql = 'SELECT * FROM readers WHERE email = :login';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':login', $_POST['login']);
+        $stmt->execute();
+    } catch (PDOException $error) {
+        $msg = "Ошибка аутентификации: " . $error->getMessage();
+    }
     
-    if ($user) {
-        $_SESSION['id'] = $user['id'];
-        $_SESSION['firstname'] = $user['full_name'];
-        header('Location: ../index.php');
-        exit;
+    if ($row = $stmt->fetch(PDO::FETCH_LAZY)) {
+        if (md5($_POST["password"]) != $row['password']) {
+            $msg = "Неправильный пароль!";
+        } else {
+            $_SESSION['login'] = $_POST["login"];
+            $_SESSION['firstname'] = $row['full_name'];
+            $_SESSION['id'] = $row['id'];
+            $_SESSION['username'] = $row['username'];
+            $msg = "Вы успешно вошли в систему";
+            header('Location: index.php');
+            exit();
+        }
     } else {
-        $_SESSION['error'] = 'Неверный email или пароль';
-        header('Location: ../login.php');
-        exit;
+        $msg = "Неправильное имя пользователя!";
     }
 }
-
-header('Location: ../login.php');
-exit;
+?>

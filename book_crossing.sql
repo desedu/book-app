@@ -64,32 +64,8 @@ CREATE TABLE history (
     FOREIGN KEY (previous_movement_id) REFERENCES history(id)
 );
 
-INSERT INTO genres (name) VALUES 
-('Русская классика'), ('Фантастика'), ('Детектив');
 
-INSERT INTO locations (name, address) VALUES
-('Библиотека Сургу', 'ул. Энергетиков, 12'),
-('Библиотека Пургу', 'ул. Пушкина, 5');
 
-INSERT INTO readers (username, password, full_name, email) VALUES
-('ivanov_ii', 'stylesrg!2{', 'Иванов Иван Иванович', 'ivanov@mail.ru'),
-('ivanova_mi', 'qwerty', 'Иванова Мария Ивановна', 'ivanova@smail.ru');
-
-INSERT INTO books (title, author, genre_id, condition_book) VALUES
-('Преступление и наказание', 'Ф. Достоевский', 1, 'хорошее'),
-('Мастер и Маргарита', 'М. Булгаков', 1, 'отличное'),
-('Евгений Онегин',  'Александр Пушкин', 2, 'удовлетворительное');
-
-INSERT INTO reviews (book_id, reader_id, rating, comment) VALUES
-(1, 1, 5, 'Великолепная книга. Прочитал и всё!'),
-(1, 2, 4, 'Тяжело'),
-(2, 1, 3, 'Мне понравился только кошак черный');
-
-INSERT INTO history (book_id, reader_id, from_location_id, to_location_id, previous_movement_id, action_type, movement_date) VALUES 
-(1, 2, 1, NULL, NULL, 'получил', '2015-05-10 14:30:00'),
-(2, 1, 2, NULL, NULL, 'получил', '2014-12-13 11:20:00'),
-(1, 2, NULL, 2, 1, 'вернул', '2025-06-10 13:15:00'),
-(3, 2, 2, NULL, 3, 'получил', '2015-12-15 16:45:00');
-
-ALTER TABLE readers ADD COLUMN favorite_genres VARCHAR(255) NULL AFTER email;
 ALTER TABLE books ADD COLUMN cover_image VARCHAR(255) NULL AFTER condition_book;
+ALTER TABLE readers ADD COLUMN favorite_genres VARCHAR(255) NULL AFTER email;
+
